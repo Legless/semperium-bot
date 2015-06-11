@@ -1,0 +1,33 @@
+﻿( function( ) {
+	if( !P.uopen ) return ;
+
+	var es = {};
+	for( var i=0; i<125; i++) es[ i ] = true;
+
+	var take_this = [];
+	for( var i in T ) {
+		if( T[ i ].slotcls == "bag" ) {
+			es[ T[ i ].slotid ] = false;
+		}
+
+		if( T[ i ].slotcls == M[ P.uopen ].tid ) {
+			take_this.push( T[ i ] );
+		}
+	}
+
+	var slots = [];
+	for( var i in es ) {
+		if( es[ i ] ) slots.push( i * 1 );
+	}
+
+	while( take_this.length ) {
+		var slot = slots.shift( );
+		var b = take_this.shift( );
+
+		
+		Cmd( "tmov&"+ b.slotcls +"&" + b.slotid + "&" + b.id +"&bag&"+ slot +"&0&" + b.quan ); // move item
+	}
+	
+
+	///
+} )( );

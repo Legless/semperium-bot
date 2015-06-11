@@ -1,0 +1,41 @@
+loc.confirmWalkOut = loc.WalkOut;
+
+var tx, ty;
+
+function goto( x, y ) {
+	tx = x;
+	ty = y;
+
+	var target = null;
+
+	if( P.cx == x && P.cy == y && P.x == 335 && P.y == 250 ) return ;
+
+	if( P.cx > x ) {
+		target = M.ve;		
+	} else if( P.cx < x ) {
+		target = M.vw;
+	} else if( P.cy > y ) {
+		target = M.vs;		
+	} else if( P.cy < y ) {
+		target = M.vn;
+	} else {
+		target = { x: 335, y: 250 };
+	}
+
+	loc.MouseMove( {elX: target.x, elY: target.y} );
+	loc.Click( {elX: target.x, elY: target.y} );
+}
+
+loc.EndTurn = function ( ) {
+	loc.Disabled = false;
+	loc.AniCnt=0;
+	loc.StrCnt=0;
+	loc.ShowRanges({});
+	loc.ShowRanges({"elX": loc.msX, "elY": loc.msY});
+
+	GetEl( 'flies' ).innerHTML = '';
+
+	setTimeout( function( ) {
+		goto( tx, ty );
+	}, 500 );
+}

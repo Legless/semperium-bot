@@ -1,0 +1,148 @@
+﻿function intfMethod(AMethod, AEvent) {
+   if (!AMethod) { return false; }
+   var xParams="";
+   if (AMethod.indexOf("(")>=0) {
+      AMethod=AMethod.replace(/\)/, "");
+      var xArr=AMethod.split("(");
+      AMethod=xArr[0];
+      xParams=xArr[1];
+   }
+   if (functionExists(AMethod)) {
+      if (xParams!="") {
+         eval("var xP=" + xParams);
+         for (var key in xP) { AEvent[key]=xP[key]; }
+      }
+      var xFunc=AMethod + "(AEvent);";
+     
+     if( AMethod == "wnd.Create" && AEvent.wndType == "modaldialog" ) 
+     	if( AEvent.id.indexOf( 'wnd_dialog' ) > -1 ) 
+     		return;
+     
+     
+      return eval(xFunc);
+   } else {
+      alert("Error: Method \"" + AMethod + "\" doesn't exist");
+      return null;
+   }
+}
+
+var oldcmd = Cmd;
+Cmd = function( a ) {
+	console.log( a );
+	oldcmd( a );
+
+	var c = a.split( '&' );
+	if( c[ 0 ] == "tccheck" ) {
+		setTimeout( craft_finish, 1000 );
+	}
+}
+
+var recipe_id = craft.CurrentRecipe( );
+var book_id = 3651 + P.profid;
+
+Cmd( "tcselrcp&" + recipe_id + "&0" );
+var recipe = Recipes[ P.profid ][ recipe_id ];
+
+var ut = recipe.ut;
+var components = recipe.raw;
+var tool = recipe.tool;
+var result_id = recipe.obj;
+var items = [];
+var ut_id = 0;
+var total_prod = 0;
+var cat = recipe.cat;
+
+for( var i in M ) {
+	if( M[ i ].iid == ut ) {
+		ut_id = M[ i ].tid;
+		break;
+	}
+}
+
+function clear_items( ) {
+	
+}
+
+function fetch_items( ) {
+	items = [];
+
+	for( var i in T ) {
+		if( T[ i ].slotcls == ut_id ) {
+			items.push( T[ i ].rid );
+		}
+	}
+
+	return items;
+}
+
+function find_item_id( s, sid ) {
+	for( var i in T ) {
+		if( T[ i ].slotcls == s && T[ i ].rid == sid ) {
+			return T[ i ];
+		}
+	}
+}
+
+function addchat( s ) {
+	chatlog.Add( { "id": "chat_sys_log", "data": s } );	
+}
+
+function find_ut( ) {
+	for( var i in M ) {
+		if( M[ i ].rid == ut ) {
+			return M[ i ];
+		}	
+	}
+}
+
+function do_craft( ) {
+	fetch_items( );
+
+	if( items.indexOf( book_id ) == -1 ) {
+		var b = find_item_id( 'bag', book_id );
+		Cmd( "tmov&bag&" + b.slotid + "&" + b.id +"&"+ ut_id +"&0&0&1" ); // move book
+	}
+
+	// move items
+	var slot = 1;
+	for( var cid in components ) {
+		qty = components[ cid ];
+		var b = find_item_id( 'bag', cid );
+		Cmd( "tmov&bag&" + b.slotid + "&" + b.id +"&"+ ut_id +"&"+ slot +"&0&" + qty ); // move item
+		slot++;
+	}
+
+	//cat
+	var b = find_item_id( 'bag', cat );
+	if( b ) {
+		if( b.quan > 1 ) {
+			var qty = 2;
+		} else {
+			var qty = 1;
+		}
+
+		Cmd( "tmov&bag&" + b.slotid + "&" + b.id +"&"+ ut_id +"&"+ slot +"&0&" + qty ); // move cat
+	}
+
+	//do craft
+	setTimeout( function( ) {
+		var b = find_item_id( 'pers', tool );
+		var u = find_ut( );
+		Cmd( "tcstart&"+ u.x +"&"+ u.y +"&" + b.id );
+	}, 1000 );
+}
+
+function craft_finish( ) {
+	fetch_items( );
+
+	var r = find_item_id( ut_id, result_id );
+	if( r ) {
+		total_prod += r.quan;
+		Cmd( "tmov&"+ ut_id +"&1&"+ r.id +"&bag&124&0&" + r.quan ); // move res
+		addchat( '+ ' + r.quan + ', '+ total_prod +' всего' );
+	}
+
+	setTimeout( do_craft, 1000 );
+}
+
+do_craft(  );

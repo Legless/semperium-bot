@@ -1,0 +1,404 @@
+﻿function addchat( s ) {
+	chatlog.Add( { "id": "chat_sys_log", "data": s } );	
+}
+
+function persNotifyExp( e ) { 
+	persUpdateExp( );
+	var xEl = GetEl( "c_exp" );
+	if( xEl ) { xEl.innerHTML = P[ "exp" ] + "/" + P[ "exp_full" ]; }
+	xEl = GetEl( "c_mexp" );
+	if( xEl ) { xEl.innerHTML = Math.floor( P[ "mexp" ] / 100 ); }
+
+	var exp = Math.ceil( e[ "exp_new" ] / 1000 ); 
+	addchat( "Опыт: " + exp + "k, БМ: " + e[ "mexp_new" ] );
+
+	window.botstats.kills ++;
+	window.botstats.exp += e["exp_new"];
+	window.botstats.mexp += e[ "mexp_new" ];
+	update_stats( );
+}
+
+function timerMAdd(AEvent) {
+  AEvent.it = 0;
+  AEvent.rt = 1;
+  
+   if (tMBusy) { tMAdd[tMAdd.length]=AEvent; }
+   else { tMChain[tMChain.length]=AEvent; }
+}
+
+
+function persNotifyMoney(AEvent) {
+   var xMoneyDiff=AEvent["money"] - AEvent["prev"];
+   if (xMoneyDiff>0) { chatAdd("chat_sys_log", "Доход: " + xMoneyDiff + " монет"); }
+   else { chatAdd("chat_sys_log", "Расход: " + xMoneyDiff + " монет"); }
+
+
+	window.botstats.money += xMoneyDiff;
+}
+
+function init_stats( ) {
+	if( window.botstats ) return ;
+
+	var div = document.createElement( 'div' );
+	div.innerHTML = "";
+	div.style.cssText = 'position: fixed; bottom: 5px; left: 5px; color: #fff; text-shadow: 1px 1px 1px #000';
+	document.body.appendChild( div );
+
+	window.botstats = {
+		started: +new Date( ), // bot start time
+		kills: 0,
+		money: 0,
+		exp: 0,
+		mexp: 0, 
+		ghosts: 0,
+		calls: 0,
+		el: div
+	};
+}
+
+function format_time( s ) {
+	var seconds = s % 60; 
+	var m = ( s - seconds ) / 60;
+	var minutes = m % 60;
+	var hours = ( m - minutes ) / 60;
+
+	if( seconds < 10 ) seconds = '0' + seconds;
+	if( minutes < 10 ) minutes = '0' + minutes;
+	if( hours < 10 ) hours = '0' + hours;
+
+	return hours + ':' + minutes + ':' + seconds;
+}
+
+function update_stats( ) {
+	if( !window.botstats ) return ;
+
+	var s = window.botstats;
+	var div = window.botstats.el;
+
+	var avg_exp = Math.ceil( s.exp / s.kills );
+
+	var exp_left = P[ "exp_full" ] - P[ "exp" ];
+	var kills_left = Math.ceil( exp_left / avg_exp );
+	var time_run = Math.ceil( ( +new Date( ) - s.started ) / 1000 );
+	var time_left = Math.ceil( kills_left * time_run / s.kills );
+
+	div.innerHTML = '<b>lgls bot, run: </b>' + format_time( time_run ) + ', ' + 
+				   '<b>money: </b>' + s.money + ', ' + 
+				   '<b>mexp: </b>' + Math.ceil( s.mexp / 100 ) + ', ' + 
+				   '<b>ghosts: </b>' + s.ghosts + ', ' + 
+				   '<b>calls: </b>' + s.calls +
+				   '<br>' + 
+				   '<b>exp: </b>' + Math.ceil( s.exp / 1000 ) + 'k, ' + 
+				   '<b>kills: </b>' + s.kills + ', ' +  
+				   '<b>avg exp: </b>' + Math.ceil( avg_exp / 1000 ) + 'k ' +
+				   '<b>avg kill time: </b>' + format_time( Math.ceil( time_run / s.kills ) ) +
+				   '<br>' + 
+				   '<b>exp left: </b>' + Math.ceil( exp_left / 1000 ) + 'k, ' + 
+				   '<b>kills left: </b>' + kills_left + ', ' + 
+				   '<b>time left: </b>' + format_time( time_left ) + 
+				   '<br>';
+
+
+	div.innerHTML += '<a href="#" onclick="stop_bot( );">Stop bot</a> | ';
+	div.innerHTML += '<a href="#" onclick="start_bot( );">Start bot</a> | ';
+	div.innerHTML += '<a href="#" onclick="reset_stats( );">Reset stats</a>';
+}
+
+function stop_bot( ) {
+	botinterval = -1;
+}
+
+function start_bot( ) {
+	if( botinterval < 1 ) {
+		target = undefined;
+		botinterval = 1;
+		lglsBot( );
+	}
+}
+
+
+function find_item_id( s, sid ) {
+	for( var i in T ) {
+		if( T[ i ].slotcls == s && T[ i ].slotid == sid ) {
+			return T[ i ].id;
+		}
+	}
+}
+
+function reset_stats( ) {
+	if( window.botstats ) {
+		window.botstats.el.parentNode.removeChild( window.botstats.el );
+		delete window.botstats;
+		init_stats( );
+		update_stats( );
+	}
+}
+
+function is_item_needed( id ) {
+	var it = Objs[ id ];
+	if( !it ) return false;
+
+	if( it.iid == 961 ) return true;
+
+	if( it.cls == 'w' && it.level < 55 ) return false;
+	if( it.cls == 'd' && it.level < 47 ) return false;
+
+	return true;
+}
+
+function $( e ) {
+	return document.querySelector( e );
+}
+
+var player = P;
+var target = undefined;
+var petId = undefined;
+
+var helper_item = find_item_id( "bag", 104 ) || find_item_id( "pers", 17 );
+
+var run_from_ghosts = false;
+
+function lglsBot() {
+	if( loc.Busy || loc.Disabled || botinterval <= 0 ) {
+		return ;
+	}
+
+	//if( $( '#disabler' ) ) {
+	//	$( '#disabler' ).remove(); //!!!
+	//}
+
+	if( !player || !helper_item ) {
+		alert( 'error' );
+		clearInterval( botinterval );
+		botinterval = -1;
+		return ;
+	}
+
+	if( !target || !target.hel ) {
+		var distance = 1000; // max
+		for( var k in M ) {
+			var mob = M[ k ];
+
+			if( ( mob.mt == 'o' ) || ( mob.mt == 'm' && mob.hel > 0 ) ) {
+				if( mob.mt == 'o' ) {
+					mob.ignored = !is_item_needed( mob.rid );
+					if( mob.ignored ) {
+						continue ;
+					}
+
+					if( !mob.checked ) {
+						addchat( mob.name + ": " + ( mob.ignored ? 'игнорируем' : 'подбираем' ) )
+					}
+
+					mob.checked = true;
+				}
+
+				var dx = Math.pow( mob.x - player.x, 2 );
+				var dy = Math.pow( mob.y - player.y, 2 ); 
+				var d = Math.sqrt( dx+dy );
+
+				if( d < distance ) {
+					distance = d;
+					target = mob;
+				}
+			}
+		}
+	}
+
+	for( var k in M ) {
+		if( M[ k ].iid > 1000 && M[ k ].mt == "m" ) {
+			botinterval = -1;
+			chatlog.Add({"id": "chat_sys_log", "data": "Виверна в локе" });
+			escape_from_there( );
+			return ;
+		}
+	}
+
+	for( var k in M ) {
+		if( M[ k ].name.indexOf( '-призрак' ) > -1 && M[ k ].hel > 0 ) {
+			if( !M[ k ].seen ) {
+				window.botstats.ghosts++;
+				M[ k ].seen = true;
+			}
+
+			if( run_from_ghosts ) {
+				botinterval = -1;
+				chatlog.Add({"id": "chat_sys_log", "data": "Призрак в локе" });
+				escape_from_there( );
+				return ;
+			} else {
+				target = M[ k ];
+			}
+		}
+	}
+
+	if( target == undefined ) {
+		target = {
+			x: 338,
+			y: 250,
+			name: ''
+		};
+	}
+
+	console.log( target );
+
+	if( target.name.indexOf( '-призрак' ) > -1 ) {
+		if( target.hel == target.hel_full ) {
+			slots.SelectEl( {el: $('#slots_fast_16') } );	
+		} else {
+			slots.SelectEl( {el: $('#slots_fast_0') } );		
+		}
+	} else if( target.mt == 'o' ) {
+		slots.SelectEl( {el: $('#slots_fast_14') } );
+	} else {
+		slots.SelectEl( {el: $('#slots_fast_15') } );
+
+		if( ! $( '#buff275' ) && ( slots.ActiveEl.id == 'slots_skill_25' ) ) {
+			loc.MouseMove( {elX: player.x+2, elY: player.y} );
+			loc.Click( {elX: player.x+1, elY: player.y} );
+		}
+
+		slots.SelectEl( {el: $('#slots_fast_0') } );
+	}
+
+
+	loc.MouseMove( {elX: target.x, elY: target.y} );
+	loc.Click( {elX: target.x, elY: target.y} );
+
+	update_stats( );
+
+	Cmd( "tmov&pers&17&"+helper_item+"&bag&104&0" );
+	Cmd( "tmov&bag&104&"+helper_item+"&pers&17&0" );
+}
+
+loc.EndTurn = function ( ) {
+	loc.Disabled = false;
+	loc.AniCnt=0;
+	loc.StrCnt=0;
+	loc.ShowRanges({});
+	loc.ShowRanges({"elX": loc.msX, "elY": loc.msY});
+
+	GetEl( 'flies' ).innerHTML = '';
+
+	setTimeout( lglsBot, 500 );
+	window.botstats.calls++;
+}
+
+function Cmd( AData ) {
+   if ((P) && (P["globmode"]) && ((P["globmode"]=="trade") || (P["globmode"]=="craft") || (P["globmode"]=="xchg"))) {
+      if ((AData.indexOf("bwalk")==0) || (AData.indexOf("l")==0)) {
+         dbgErrCnt++;
+         loc.EndTurn();
+         return;
+      }
+   }
+   if (Authed) {
+      //if (!Located) { chainPush(AData); AData="lseld"; }
+      //else if (!Thinged) { chainPush(AData); AData="tget"; }
+   }
+   if ((Socket) && (SocketConnected)) {
+      LASTCMDTIME=time();
+      Socket.write(AData + "\n");
+   } else { statusEvent({"ERROR": "Not connected"}); }
+
+	console.log( AData );
+	var c = AData.split( '&' );
+	if( c[ 0 ] == "tpickup" ) {
+		setTimeout( lglsBot, 150 );
+	}
+}
+
+var botinterval = 1; 
+init_stats( );
+lglsBot( );
+
+function find_item( rid, s="bag" ) {
+	for( var i in T ) {
+		if( T[ i ].slotcls == s && T[ i ].rid == rid ) {
+			return T[ i ];
+		}
+	}
+}
+
+var maps_to_play = [ 1,3 ];
+var use_tps = P.name == "_hel";
+
+
+function teleport_to( map_id ) {
+	if( !use_tps ) {
+		return;
+	}
+
+	var n = 0;
+	var m = Maps[ map_id ];
+
+	var tp_id = 0;
+	for( var i in Countries ) {
+		if( i == m.c ) {
+			break;
+		}
+
+		n++;
+	}
+
+	tp_id = 2501 + n;
+
+	var tp = find_item( tp_id );
+
+	Cmd( "tmov&bag&"+ tp.slotid +"&"+ tp.id +"&null&" + ( P.x + 10 ) + "&" + P.y + "&1" );
+	setTimeout( function( ) {
+		var mob = null;
+		for( var i in M ) {
+			if( M[ i ].iid == tp_id ) {
+				mob = M[ i ];
+			}
+		}
+
+		var weap = T[ find_item_id( 'pers', 0 ) ];
+		if( mob && weap ) {
+			Cmd( "lget&"+ mob.x +"&"+ mob.y +"&"+ weap.id +"&"+map_id );
+		}
+	}, 1000 );
+}
+
+function current_map( ) {
+	for( var i in Maps ) {
+		var m = Maps[ i ];
+		if( m.c == P.c && m.cx == P.cx && m.cy == P.cy ) {
+			return i;
+		}
+	}
+}
+
+function escape_from_there( ) {
+	if( !use_tps ) {
+		return;
+	}
+
+	var cur = current_map( );
+	var m = [ ];
+
+	for( var i in maps_to_play ) {
+		if( cur != maps_to_play[ i ] ) {
+			m.push( maps_to_play[ i ] );
+		}
+	}
+
+	var goto = m[ Math.floor( Math.random( ) * m.length ) ];
+	teleport_to( goto );
+
+	setTimeout( function( ) {
+		loc.MouseMove( {elX: target.x, elY: target.y} );
+		loc.Click( {elX: target.x, elY: target.y} );
+
+		setTimeout( function( ) {
+			target = undefined;
+			botinterval = 1;
+			lglsBot( );
+		}, 2000 );
+	}, 2000 );
+}
+
+/*
+Пург 0:-6 чеснок
+ */

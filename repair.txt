@@ -1,0 +1,43 @@
+﻿function repair_me() {
+	function find_item_id( s, sid ) {
+		for( var i in T ) {
+			if( T[ i ].slotcls == s && T[ i ].rid == sid ) {
+				return T[ i ];
+			}
+		}
+	}
+
+	var arep = find_item_id( 'bag', 2737 );
+	var wrep = find_item_id( 'bag', 2742 );
+
+	var items = [];
+
+	function repair_list( ) {
+		items = [];
+
+		for( var i in T ) {
+			if( ( T[ i ].slotcls == "pers" ) && ( T[ i ].cap < T[ i ].maxcap ) ) {
+				items.push( T[ i ] );
+			}
+		}
+	}
+
+	repair_list( );
+
+	while( items.length ) {
+		repair_list( );
+
+		for( var i in items ) {
+			var item = items[ i ];
+
+			var q = Objs[ item.rid ];
+			if( q.cls == 'd' ) {
+				Cmd( "tmov&bag&"+ arep.slotid +"&"+arep.id+"&pers&"+ item.slotid +"&" + item.id );
+			} 
+
+			if( q.cls == 'w' ) {
+				Cmd( "tmov&bag&"+ wrep.slotid +"&"+wrep.id+"&pers&"+ item.slotid +"&" + item.id );
+			}
+		}
+	}
+}
