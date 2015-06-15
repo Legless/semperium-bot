@@ -244,8 +244,6 @@ function lglsBot() {
 		};
 	}
 
-	console.log( target );
-
 	if( target.name.indexOf( '-призрак' ) > -1 ) {
 		if( target.hel == target.hel_full ) {
 			slots.SelectEl( {el: $('#slots_fast_16') } );	
@@ -307,7 +305,6 @@ function Cmd( AData ) {
       Socket.write(AData + "\n");
    } else { statusEvent({"ERROR": "Not connected"}); }
 
-	console.log( AData );
 	var c = AData.split( '&' );
 	if( c[ 0 ] == "tpickup" ) {
 		setTimeout( lglsBot, 150 );
@@ -479,8 +476,6 @@ var repair = {
 		while( this.check_durability( ) < 1 ) {
 			for( var i in items ) {
 				if( items[ i ].cap == items[ i ].maxcap ) continue ;
-
-				console.log( items[ i ] )
 
 				var repair = this.find_repair_for( items[ i ].rid );
 				if( !repair ) {
