@@ -473,7 +473,7 @@ var repair = {
 
 	do_repair: function( ) {
 		if( this.stop_repair ) return ;
-		if( this.check_durability && this.check_durability > this.repair_durability_percent ) return ;
+		if( this.check_durability( ) && this.check_durability( ) > this.repair_durability_percent ) return ;
 
 		var items = this.get_items( );
 		while( this.check_durability( ) < 1 ) {
