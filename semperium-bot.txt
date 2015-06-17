@@ -803,6 +803,7 @@ var skills = {
 		5: [ 292, 295 ],
 		6: [ ],
 		7: [ 343 ],
+		8: [ ]
 	},
 
 	get_buffs: function( ) {
