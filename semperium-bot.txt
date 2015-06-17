@@ -239,7 +239,7 @@ function lglsBot() {
 		}
 	}
 
-	if( target == undefined ) {
+	if( target == undefined || ( target.hel === 0 ) ) {
 		target = {
 			x: 338,
 			y: 250,
