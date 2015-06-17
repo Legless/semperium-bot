@@ -152,6 +152,76 @@ function is_item_needed( id ) {
 	return true;
 }
 
+function are_there_any_drops( ) {
+	for( var i in M ) {
+		if( M[ i ].mt == 'o' ) 
+			return true;
+	}
+
+	return false;
+}
+
+var pet = {
+	use_pet: true,
+
+	get: function( ) {
+		if( !this.is_ok( ) ) return false;
+
+		for( var i in M ) {
+			if( M[ i ].mt == 'a' && M[ i ].tid == find_item_id( 'pers', 9 ) ) {
+				return M[ i ];
+			}
+		}
+
+		return false;
+	},
+
+	is_ok: function( ) {
+		return this.use_pet && ( find_item_id( 'pers', 9 ) != undefined ) && ( T[ find_item_id( 'pers', 9 ) ].hel > 0 );
+	},
+
+	summon: function( ) {
+		if( !this.get( ) ) Cmd( 'tani&1' );
+	},
+
+	unsummon: function( ) {
+		if( this.get( ) ) Cmd( 'tani&1' );
+	},
+
+	get_drops: function( ) {
+		if( this.get( ) && are_there_any_drops( ) ) Cmd( 'baniobj&1' );		
+	},
+
+	need_heal: function( ) {
+		if( !this.get( ) ) return ;
+
+		var p = T[ find_item_id( 'pers', 9 ) ];
+		if( p.hel_full - p.hel > 600 ) return true;
+	},
+
+	heal: function( ) {
+		if( !this.get( ) ) return ;
+
+		var heal = find_item( 2670 ) || find_item( 2671 ) || find_item( 2672 );
+		if( !heal ) {
+			this.unsummon( );
+			this.use_pet = false;
+			addchat( 'Нет лечилок для животного' );
+		}
+
+		// саммоним пета рядом с игроком
+		Cmd( 'tani&1' );
+		Cmd( 'tani&1' );
+
+		setTimeout( function( ) {
+			slots.SelectEl( { el: $( '#slots_bag_'+heal.slotid ) } );
+
+			loc.MouseMove( { elX: pet.get( ).x, elY: pet.get( ).y } );
+			loc.Click( { elX: pet.get( ).x, elY: pet.get( ).y } );
+		}, 500 );
+	}
+};
+
 function $( e ) {
 	return document.querySelector( e );
 }
@@ -163,7 +233,7 @@ var helper_item = find_item_id( "bag", 104 ) || find_item_id( "pers", 17 );
 var run_from_ghosts = false;
 var hunt_for = 'm'; // target to attack
 
-function lglsBot() {
+function lglsBot( ) {
 	if( loc.Busy || loc.Disabled || botinterval <= 0 ) {
 		return ;
 	}
@@ -179,6 +249,13 @@ function lglsBot() {
 		clearInterval( botinterval );
 		botinterval = -1;
 		return ;
+	}
+
+	if( pet.is_ok( ) ) {
+		pet.summon( );
+		pet.get_drops( );
+
+		if( pet.need_heal( ) ) pet.heal( );
 	}
 
 	if( !target || !target.hel ) {
