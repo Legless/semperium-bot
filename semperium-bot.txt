@@ -207,23 +207,24 @@ var pet = {
 			this.unsummon( );
 			this.use_pet = false;
 			addchat( 'Нет лечилок для животного' );
+			return ;
 		}
 
 		// саммоним пета рядом с игроком
 		Cmd( 'tani&1' );
 		Cmd( 'tani&1' );
 
-		var old_target = target;
+		var oldt = target;
 		stop_bot( );
 
 		setTimeout( function( ) {
-			slots.SelectEl( { el: $( '#slots_bag_' + heal.slotid ) } );
+			var p = pet.get( );
+			Cmd( "bstrike&"+ p.x +"&"+ p.y +"&" + heal.id );
 
-			loc.MouseMove( { elX: pet.get( ).x, elY: pet.get( ).y } );
-			loc.Click( { elX: pet.get( ).x, elY: pet.get( ).y } );
-
-			target = old_target;
-			start_bot( );
+			setTimeout( function( ) {
+				var target = oldt;
+				start_bot( );
+			}, 500 );
 		}, 500 );
 	},
 
@@ -237,29 +238,29 @@ var pet = {
 	feed: function( ) {
 		if( !this.get( ) ) return ;
 
-		// todo: угли для дракона
-		var eat = find_item( 2700 ) || find_item( 2701 ) || find_item( 2702 );
-		if( !eat ) {
+		var food = find_item( 2700 ) || find_item( 2701 ) || find_item( 2702 );
+		if( !food ) {
 			this.unsummon( );
 			this.use_pet = false;
 			addchat( 'Нет еды для животного' );
+			return ;
 		}
 
 		// саммоним пета рядом с игроком
 		Cmd( 'tani&1' );
 		Cmd( 'tani&1' );
 
-		var old_target = target;
+		var oldt = target;
 		stop_bot( );
 
 		setTimeout( function( ) {
-			slots.SelectEl( { el: $( '#slots_bag_'+eat.slotid ) } );
+			var p = pet.get( );
+			Cmd( "bstrike&"+ p.x +"&"+ p.y +"&" + food.id );
 
-			loc.MouseMove( { elX: pet.get( ).x, elY: pet.get( ).y } );
-			loc.Click( { elX: pet.get( ).x, elY: pet.get( ).y } );
-
-			target = old_target;
-			start_bot( );
+			setTimeout( function( ) {
+				var target = oldt;
+				start_bot( );
+			}, 500 );
 		}, 500 );
 	},
 };
@@ -291,14 +292,6 @@ function lglsBot( ) {
 		clearInterval( botinterval );
 		botinterval = -1;
 		return ;
-	}
-
-	if( pet.is_ok( ) ) {
-		pet.summon( );
-		pet.get_drops( );
-
-		if( pet.need_heal( ) ) pet.heal( );
-		if( pet.need_eat( ) ) pet.feed( );
 	}
 
 	if( !target || !target.hel ) {
@@ -395,6 +388,14 @@ function lglsBot( ) {
 	Cmd( "tmov&pers&17&"+helper_item+"&bag&104&0" );
 	Cmd( "tmov&bag&104&"+helper_item+"&pers&17&0" );
 
+	if( pet.is_ok( ) ) {
+		pet.summon( );
+		pet.get_drops( );
+
+		if( pet.need_heal( ) ) pet.heal( );
+		if( pet.need_eat( ) ) pet.feed( );
+	}
+
 	repair.do_repair( );
 }
 
@@ -427,6 +428,8 @@ function Cmd( AData ) {
       LASTCMDTIME=time();
       Socket.write(AData + "\n");
    } else { statusEvent({"ERROR": "Not connected"}); }
+
+   console.log( AData );
 
 	var c = AData.split( '&' );
 	if( c[ 0 ] == "tpickup" ) {
