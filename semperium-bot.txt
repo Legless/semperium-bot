@@ -213,13 +213,55 @@ var pet = {
 		Cmd( 'tani&1' );
 		Cmd( 'tani&1' );
 
+		var old_target = target;
+		stop_bot( );
+
 		setTimeout( function( ) {
-			slots.SelectEl( { el: $( '#slots_bag_'+heal.slotid ) } );
+			slots.SelectEl( { el: $( '#slots_bag_' + heal.slotid ) } );
 
 			loc.MouseMove( { elX: pet.get( ).x, elY: pet.get( ).y } );
 			loc.Click( { elX: pet.get( ).x, elY: pet.get( ).y } );
+
+			target = old_target;
+			start_bot( );
 		}, 500 );
-	}
+	},
+
+	need_eat: function( ) {
+		if( !this.get( ) ) return ;
+
+		var p = T[ find_item_id( 'pers', 9 ) ];
+		if( p.cou < 300 ) return true;
+	},
+
+	feed: function( ) {
+		if( !this.get( ) ) return ;
+
+		// todo: угли для дракона
+		var eat = find_item( 2700 ) || find_item( 2701 ) || find_item( 2702 );
+		if( !eat ) {
+			this.unsummon( );
+			this.use_pet = false;
+			addchat( 'Нет еды для животного' );
+		}
+
+		// саммоним пета рядом с игроком
+		Cmd( 'tani&1' );
+		Cmd( 'tani&1' );
+
+		var old_target = target;
+		stop_bot( );
+
+		setTimeout( function( ) {
+			slots.SelectEl( { el: $( '#slots_bag_'+eat.slotid ) } );
+
+			loc.MouseMove( { elX: pet.get( ).x, elY: pet.get( ).y } );
+			loc.Click( { elX: pet.get( ).x, elY: pet.get( ).y } );
+
+			target = old_target;
+			start_bot( );
+		}, 500 );
+	},
 };
 
 function $( e ) {
@@ -256,6 +298,7 @@ function lglsBot( ) {
 		pet.get_drops( );
 
 		if( pet.need_heal( ) ) pet.heal( );
+		if( pet.need_eat( ) ) pet.feed( );
 	}
 
 	if( !target || !target.hel ) {
