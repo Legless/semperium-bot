@@ -623,16 +623,27 @@ function getEmptySlot( cls ) {
 }
 
 function SellItem( ) {
-	if( !slots.SelectedEl || !openedMob || !M[ openedMob ] ) return; 
+	if( !slots.SelectedEl ) return; 
 
 	var tid = slots.SelectedEl.tid;
 	var b = T[ tid ];
-	var m = M[ openedMob ];
+
+	if( openedMob && M[ openedMob ] ) {
+		var m = M[ openedMob ];
+	} else {
+		var m = false;
+	}
 
 	if( b.slotcls != 'bag' &&  b.slotcls != 'pers' ) {
 		// забрать из утвари
 		Cmd( "tmov&"+ m.tid +"&"+ b.slotid +"&"+ b.id +"&bag&"+ getEmptySlot( 'bag' ) +"&0&" + b.quan );  
 	} else {
+		if( !m ) {
+			Cmd( "tmov&bag&"+ b.slotid +"&"+ b.id +"&null&"+ P.x + "&"+ P.y +"&" + b.quan );
+
+			return;
+		}
+
 		if( m.rid == 7 ) {
 			// продать 
 			Cmd( "tmov&bag&"+ b.slotid +"&"+ b.id +"&"+ m.tid +"&"+ getEmptySlot( m.tid ) +"&0&1&" + Math.ceil( Objs[ b.rid ].price / 2 ) );
