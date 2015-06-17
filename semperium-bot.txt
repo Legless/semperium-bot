@@ -207,24 +207,16 @@ var pet = {
 			this.unsummon( );
 			this.use_pet = false;
 			addchat( 'Нет лечилок для животного' );
-			return ;
+			return false;
 		}
 
 		// саммоним пета рядом с игроком
 		Cmd( 'tani&1' );
 		Cmd( 'tani&1' );
 
-		var oldt = target;
-		stop_bot( );
-
 		setTimeout( function( ) {
 			var p = pet.get( );
 			Cmd( "bstrike&"+ p.x +"&"+ p.y +"&" + heal.id );
-
-			setTimeout( function( ) {
-				var target = oldt;
-				start_bot( );
-			}, 500 );
 		}, 500 );
 	},
 
@@ -243,24 +235,16 @@ var pet = {
 			this.unsummon( );
 			this.use_pet = false;
 			addchat( 'Нет еды для животного' );
-			return ;
+			return false;
 		}
 
 		// саммоним пета рядом с игроком
 		Cmd( 'tani&1' );
 		Cmd( 'tani&1' );
 
-		var oldt = target;
-		stop_bot( );
-
 		setTimeout( function( ) {
 			var p = pet.get( );
 			Cmd( "bstrike&"+ p.x +"&"+ p.y +"&" + food.id );
-
-			setTimeout( function( ) {
-				var target = oldt;
-				start_bot( );
-			}, 500 );
 		}, 500 );
 	},
 };
