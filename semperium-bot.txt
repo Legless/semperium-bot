@@ -2,6 +2,41 @@
 	chatlog.Add( { "id": "chat_sys_log", "data": s } );	
 }
 
+chatlog.Add = function (AEvent) {
+	if (!AEvent["data"]) { return; }
+	AEvent["data"]=AEvent["data"].replace(/#5C;/g, "\\");
+	AEvent["data"]=AEvent["data"].replace(/#22;/g, "\"");
+	var xEl=GetEl(AEvent["id"]);
+
+	if( AEvent.id == 'chat_sys_log' && ( AEvent.data.indexOf( 'Действие преждевременно' ) > -1 ) ) {
+		// wait for action
+		stop_bot( );
+		setTimeout( start_bot, 1000 );
+	}
+
+	if (xEl) {
+		if ((AEvent["id"]!="chat_sys_log") && (AEvent["id"]!="chat_bat_log") && (!AEvent["pid"])) { return; }
+		var xData="";
+		if (AEvent["name"]) { xData=xData + "<span class=\"chatuser\">" + AEvent["name"] + "</span>"; }
+		if (AEvent["toname"]) { xData=xData + "&nbsp;&gt;&nbsp;<span class=\"chatuser2\">" + AEvent["toname"] + "</span>"; }
+		if (AEvent["name"])  { xData=xData + ":&nbsp;"; }
+		xData=xData + AEvent["data"] + "<br />";
+		var yEl=document.createElement("span");
+		if (!yEl) { return null; }
+		yEl.PID=AEvent["pid"];
+		yEl.innerHTML=xData;
+		if ((AEvent["toname"]) && (AEvent["toname"]==P["name"])) { yEl.style.backgroundColor="#E9E3D6"; }
+		xEl.appendChild(yEl);
+		var xNodes=xEl.childNodes;
+		if (xNodes.length>40) {
+			var zEl=xEl.firstChild;
+			xEl.removeChild(zEl);
+			delete zEl;
+		}
+		xEl.scrollTop=xEl.scrollHeight;
+	}
+}
+
 function persNotifyExp( e ) { 
 	persUpdateExp( );
 	var xEl = GetEl( "c_exp" );
@@ -619,3 +654,193 @@ var repair = {
 		}
 	}
 };
+
+function getEmptySlot( cls ) {
+	var es = {};
+	for( var i=0; i<125; i++) es[ i ] = true;
+
+	for( var i in T ) {
+		if( T[ i ].slotcls == cls ) {
+			es[ T[ i ].slotid ] = false;
+		}
+	}
+
+	var slots = [];
+	for( var i in es ) {
+		if( es[ i ] ) slots.push( i * 1 );
+	}
+
+	var slot = slots.shift( );
+	if( !slot ) return 0;
+	return slot;
+}
+
+function SellItem( ) {
+	if( !slots.SelectedEl || !openedMob || !M[ openedMob ] ) return; 
+
+	var tid = slots.SelectedEl.tid;
+	var b = T[ tid ];
+	var m = M[ openedMob ];
+
+	if( b.slotcls != 'bag' &&  b.slotcls != 'pers' ) {
+		// забрать из утвари
+		Cmd( "tmov&"+ m.tid +"&"+ b.slotid +"&"+ b.id +"&bag&"+ getEmptySlot( 'bag' ) +"&0&" + b.quan );  
+	} else {
+		if( m.rid == 7 ) {
+			// продать 
+			Cmd( "tmov&bag&"+ b.slotid +"&"+ b.id +"&"+ m.tid +"&"+ getEmptySlot( m.tid ) +"&0&1&" + Math.ceil( Objs[ b.rid ].price / 2 ) );
+		} else {
+			// положить в утварь
+			Cmd( "tmov&bag&"+ b.slotid +"&"+ b.id +"&"+ m.tid +"&"+ getEmptySlot( m.tid ) +"&0&" + b.quan );
+		}
+		
+	}
+}
+
+function take_all_items( ) {
+	if( !P.uopen ) return ;
+
+	var es = {};
+	for( var i=0; i<125; i++) es[ i ] = true;
+
+	var take_this = [];
+	for( var i in T ) {
+		if( T[ i ].slotcls == "bag" ) {
+			es[ T[ i ].slotid ] = false;
+		}
+
+		if( T[ i ].slotcls == M[ P.uopen ].tid ) {
+			take_this.push( T[ i ] );
+		}
+	}
+
+	var slots = [];
+	for( var i in es ) {
+		if( es[ i ] ) slots.push( i * 1 );
+	}
+
+	while( take_this.length ) {
+		var slot = slots.shift( );
+		var b = take_this.shift( );
+
+		
+		Cmd( "tmov&"+ b.slotcls +"&" + b.slotid + "&" + b.id +"&bag&"+ slot +"&0&" + b.quan ); // move item
+	}
+	
+
+	///
+}
+
+slots.SelectEl = function (AEvent) {
+		if (!AEvent["el"]) { return; }
+		if (!AEvent["el"]["thingID"]) { return; }
+		if (AEvent["el"]["disabled"]) { return; }
+
+		var xEl=AEvent["el"];
+		var xID=slots.SelectedEl["id"];
+		slots.UnSelectEl();
+		slots.SelectedEl={"id": xEl.id, "tid": xEl.thingID, "elX": AEvent["elX"], "elY": AEvent["elY"]};
+		LASTSELECTED=xEl.thingID;
+		if ((T[xEl.thingID]) && (thingIsAvailable(T[xEl.thingID]))) {
+			slots.DeActivateEl();
+			slots.ActivateEl(AEvent);
+			persSelectThing(T[xEl.thingID]);
+			if ((P["globmode"]=="xchg") && (T[xEl.thingID]["rid"]==SKILL_XCHG_ID)) { loc.cmdCloseXchg(T[xEl.thingID]); }
+		} else {
+			if (((xID==xEl.id) || (xEl.id.indexOf("_fast_")>=0)) && (T[xEl.thingID]) && (thingIsApplicable(T[xEl.thingID]))) {
+				var xEvent=copyEvent(T[xEl.thingID]);
+				xEvent["openerid"]=xEl.id;
+				persApplyThing(xEvent);
+			} else if (((xEl.id.indexOf("_sbuy_")>=0) || (xEl.id.indexOf("_sbasket_")>=0)) && (T[xEl.thingID])) {
+				shop.SelectEl(AEvent);
+			}
+			xEl.parentNode.style.borderColor="#D4BF97";
+		}
+
+	if( AEvent.key == 2 ) {
+		SellItem( );
+	}
+}
+
+slots.OpenMob = function(AMobID, AEvent) {
+		if (!M[AMobID]) { return; }
+		if (AEvent) {
+			for (var key in AEvent) { T[key]=AEvent[key]; }
+		}
+
+	window.openedMob = AMobID;
+
+	var xEl=GetEl("img" + AMobID);
+	if (!xEl) { return; }
+	var xnumX=4;
+	var xnumY=2;
+	if (M[AMobID]["vol"]) {
+		if (M[AMobID]["vol"]<=4) { xnumX=M[AMobID]["vol"]; xnumY=1; }
+		else if (M[AMobID]["vol"]<=6) { xnumX=3; xnumY=2; }
+		else if (M[AMobID]["vol"]<=8) { xnumX=4; xnumY=2; }
+		else if (M[AMobID]["vol"]==9) { xnumX=3; xnumY=3; }
+		else if (M[AMobID]["vol"]<=12) { xnumX=4; xnumY=3; }
+		else { xnumX=5; xnumY=Math.ceil(M[AMobID]["vol"] / 5); }
+	}
+	if ((M[AMobID]["pid"]) && (M[AMobID]["pid"]==PID)) { P["uopen"]=AMobID; }
+	var xXY=getGameXY(xEl, "wndcontent");
+	var xLeft=xXY["x"];
+	if ((xLeft + Math.round(xnumX * 50) + wndBorderWidth)>GameWidth) { xLeft=GameWidth - Math.round(xnumX * 50) - wndBorderWidth; }
+	var xTop=xXY["y"] - (Math.round(xnumY * 50) + wndBorderWidth);
+	if ((T[M[AMobID]["tid"]]) && (T[M[AMobID]["tid"]]["rid"]) && (T[M[AMobID]["tid"]]["rid"]==SKILL_XCHG_ID)) { xTop=xTop - 34; }
+	if (xTop<0) { xTop=xXY["y"] + M[AMobID]["h"]; }
+	intfShowUtens({"id": M[AMobID]["tid"], "numX": xnumX, "numY": xnumY, "x": xLeft, "y": xTop});
+}
+
+function intfShowUtens(AEvent) {
+	var xCls=intfHideUtens();
+	if ((xCls) && (xCls==AEvent["id"])) { return; }
+	var xPIW = Math.round(AEvent["numX"] * 50) + 8;
+	var xPIH = Math.round(AEvent["numY"] * 50) + 8;
+	var xIsXchg=false;
+	if ((T[AEvent["id"]]) && (T[AEvent["id"]]["rid"]) && (T[AEvent["id"]]["rid"]==SKILL_XCHG_ID)) { xIsXchg=true; }
+	// Window
+	var yEl=null;
+	var xEl=intfCreateControl({
+		"compid": "wnd",
+		"id": "wnd_utens",
+		"wndType": "toolbar",
+		"left": AEvent["x"],
+		"top": AEvent["y"],
+		"width": xPIW,
+		"height": xPIH,
+		});
+	if (xEl) {
+		xEl.slotCls=AEvent["id"];
+		if (xIsXchg) { xEl.cb=persXchgButton; }
+		intfAddControl("main", xEl);
+	}
+	if (xIsXchg) {
+		yEl=GetEl("wnd_utens_content");
+		if (yEl) { yEl.innerHTML="<span id=\"wnd_utens_xchg\">" + persGetXchgText() + "</span>"; }
+	}
+	xEl=intfCreateControl({
+		"compid": "slots",
+		"id": "slots_" + AEvent["id"],
+		"numX": AEvent["numX"],
+		"numY": AEvent["numY"],
+		"acceptDrop": 1
+		});
+	if (xEl) {
+		intfAddControl("wnd_utens_content", xEl);
+		xEl=document.createElement("div");
+		if (xEl) {
+			xEl.id="wnd_utens_buttons_cnt";
+			if ((P["xchg_mode"]=="busy") || (P["xchg_mode"]=="ok")) { xEl.style.display="block"; btn_take_all = false; }
+			else { xEl.style.display="none"; btn_take_all = true; }
+			xEl.innerHTML=intfButtons("wnd_utens_buttons", {"ok": "Согласен", "cancel": "Отменить"});
+			intfAddControl("wnd_utens_content", xEl);
+		}
+	}
+	slots.FillCls({"id": AEvent["id"]});
+	
+	if( btn_take_all ) {
+		$( '#wnd_utens_buttons_cnt' ).style.display="block";
+		$( '#wnd_utens_buttons_cnt' ).innerHTML = '<span><input type="button" value="Забрать всё" class="dialogbutton" onclick="take_all_items( )"></span>';
+	}
+}
