@@ -159,19 +159,20 @@ function $( e ) {
 var player = P;
 var target = undefined;
 var petId = undefined;
-
 var helper_item = find_item_id( "bag", 104 ) || find_item_id( "pers", 17 );
-
 var run_from_ghosts = false;
+var hunt_for = 'm'; // target to attack
 
 function lglsBot() {
 	if( loc.Busy || loc.Disabled || botinterval <= 0 ) {
 		return ;
 	}
 
-	//if( $( '#disabler' ) ) {
-	//	$( '#disabler' ).remove(); //!!!
-	//}
+	var weapon = T[ find_item_id( 'pers', 0 ) ].rid;
+	if( weapon == 1923 ) hunt_for = 't'; // топор
+	else if( weapon == 1922 ) hunt_for = 'g'; // нож травника
+	else hunt_for = 'm'; // оружие
+	// todo: кирка и перчатка
 
 	if( !player || !helper_item ) {
 		alert( 'error' );
@@ -185,7 +186,7 @@ function lglsBot() {
 		for( var k in M ) {
 			var mob = M[ k ];
 
-			if( ( mob.mt == 'o' ) || ( mob.mt == 'm' && mob.hel > 0 ) ) {
+			if( ( mob.mt == 'o' ) || ( mob.mt == hunt_for && mob.hel > 0 ) ) {
 				if( mob.mt == 'o' ) {
 					mob.ignored = !is_item_needed( mob.rid );
 					if( mob.ignored ) {
