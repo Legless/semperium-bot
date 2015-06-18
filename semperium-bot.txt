@@ -210,6 +210,9 @@ var pet = {
 			return false;
 		}
 
+		var t = target;
+		stop_bot( );
+
 		// саммоним пета рядом с игроком
 		Cmd( 'tani&1' );
 		Cmd( 'tani&1' );
@@ -217,6 +220,10 @@ var pet = {
 		setTimeout( function( ) {
 			var p = pet.get( );
 			Cmd( "bstrike&"+ p.x +"&"+ p.y +"&" + heal.id );
+
+			setTimeout( function( ) {
+				start_bot( t );
+			}, 500 );
 		}, 500 );
 	},
 
@@ -238,6 +245,9 @@ var pet = {
 			return false;
 		}
 
+		var t = target;
+		stop_bot( );
+
 		// саммоним пета рядом с игроком
 		Cmd( 'tani&1' );
 		Cmd( 'tani&1' );
@@ -245,6 +255,10 @@ var pet = {
 		setTimeout( function( ) {
 			var p = pet.get( );
 			Cmd( "bstrike&"+ p.x +"&"+ p.y +"&" + food.id );
+
+			setTimeout( function( ) {
+				start_bot( t );
+			}, 500 );
 		}, 500 );
 	},
 };
@@ -353,11 +367,7 @@ function lglsBot( ) {
 	} else if( target.mt == 'o' ) {
 		slots.SelectEl( {el: $('#slots_fast_14') } );
 	} else {
-		if( skills.use_buff( ) ) {
-			setTimeout( lglsBot, 500 );
-			return ;
-		}
-
+		skills.use_buff( );
 		slots.SelectEl( {el: $('#slots_fast_0') } );
 	}
 
@@ -513,8 +523,9 @@ function escape_from_there( ) {
 }
 
 var repair = {
-	repair_durability_percent: 0.75, // процент поломки, ниже которого мы идём чиниться
+	repair_durability_percent: 0.5, // процент поломки, ниже которого мы идём чиниться
 	stop_repair: false,
+	repair_cycle: false,
 
 	find_item_id: function( s, sid ) {
 		for( var i in T ) {
@@ -577,27 +588,32 @@ var repair = {
 	},
 
 	do_repair: function( ) {
-		if( this.stop_repair ) return ;
-		if( this.check_durability( ) && this.check_durability( ) > this.repair_durability_percent ) return ;
+		if( !this.repair_cycle ) {
+			if( this.stop_repair ) return ;
+			if( this.check_durability( ) && this.check_durability( ) > this.repair_durability_percent ) return ;
 
-		addchat( Math.round( this.check_durability( ) * 100 ) + "% поломки. Включаем починку." );
+			addchat( Math.round( this.check_durability( ) * 100 ) + "% поломки. Включаем починку." );
+		}
 
-		var items = this.get_items( );
+		var items = this.get_items( );	
 		if( this.check_durability( ) < 1 ) {
+			this.repair_cycle = true;
 			setTimeout( function( ) {
 				for( var i in items ) {
 					if( items[ i ].cap == items[ i ].maxcap ) continue ;
-					var repair = this.find_repair_for( items[ i ].rid );
-					if( !repair ) {
+					var rep = repair.find_repair_for( items[ i ].rid );
+					if( !rep ) {
 						addchat( "Нет ремонтов для "+ Objs[ items[ i ].rid ].name +". Автопочинка отключена." );
-						this.stop_repair = true;
+						repair.stop_repair = true;
 						return ;
 					}
-					Cmd( "tmov&bag&"+ repair.slotid +"&"+repair.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
+					Cmd( "tmov&bag&"+ rep.slotid +"&"+rep.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
 				}
 
 				repair.do_repair( );
 			}, 200 );
+		} else {
+			this.repair_cycle = false;
 		}
 	}
 };
@@ -622,6 +638,7 @@ function getEmptySlot( cls ) {
 	return slot;
 }
 
+var openedMob = undefined;
 function SellItem( ) {
 	if( !slots.SelectedEl ) return; 
 
