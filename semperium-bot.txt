@@ -367,7 +367,18 @@ function lglsBot( ) {
 	} else if( target.mt == 'o' ) {
 		slots.SelectEl( {el: $('#slots_fast_14') } );
 	} else {
-		skills.use_buff( );
+		if( skills.buff_avail( ) ) {
+			var t = target;
+			stop_bot( );
+			setTimeout( function( ) {
+				skills.use_buff( );
+				setTimeout( function( ) {
+					start_bot( t );
+				}, 250 );
+			}, 250 );
+			return ;
+		}
+
 		slots.SelectEl( {el: $('#slots_fast_0') } );
 	}
 
@@ -852,13 +863,21 @@ var skills = {
 		return res;
 	},
 
-	use_buff: function( ) {
+	buff_avail: function( ) {
 		for( var i in this.buffs[ P.profid ] ) {
 			if( $( '#buff' + this.buffs[ P.profid ][ i ] ) ) return false;
 		}
 
+		if( this.get_buffs( ).pop( ) ) {
+			return true;
+		} else {
+			return false;
+		}
+	},
+
+	use_buff: function( ) {
 		var skill = this.get_buffs( ).pop( );
-		if( skill ) {
+		if( this.buff_avail( ) ) {
 			var oldt = target;
 			Cmd( "bstrike&" + P.x + "&" + P.y + "&" + skill.id );
 			return true;
