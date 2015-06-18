@@ -299,7 +299,8 @@ function lglsBot( ) {
 
 			if( ( mob.mt == 'o' ) || ( mob.mt == hunt_for && mob.hel > 0 ) ) {
 				if( mob.mt == 'o' ) {
-					mob.ignored = !is_item_needed( mob.rid );
+					if( pet.is_ok( ) )	mob.ignored = true;  // если с петом всё окей -- пусть он собирает итемы
+					else				mob.ignored = !is_item_needed( mob.rid );
 					if( mob.ignored ) {
 						continue ;
 					}
