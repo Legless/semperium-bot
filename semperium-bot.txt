@@ -1,4 +1,4 @@
-﻿function addchat( s ) {
+function addchat( s ) {
 	chatlog.Add( { "id": "chat_sys_log", "data": s } );	
 }
 
@@ -19,9 +19,9 @@ function persNotifyExp( e ) {
 }
 
 function timerMAdd(AEvent) {
-  AEvent.it = 0;
-  AEvent.rt = 1;
-  
+   AEvent.it = 0;
+   AEvent.rt = 1;
+   
    if (tMBusy) { tMAdd[tMAdd.length]=AEvent; }
    else { tMChain[tMChain.length]=AEvent; }
 }
@@ -114,9 +114,9 @@ function stop_bot( ) {
 	botinterval = -1;
 }
 
-function start_bot( ) {
+function start_bot( nt ) {
 	if( botinterval < 1 ) {
-		target = undefined;
+		target = nt || undefined;
 		botinterval = 1;
 		lglsBot( );
 	}
@@ -433,7 +433,7 @@ function find_item( rid, s="bag" ) {
 	}
 }
 
-var maps_to_play = [ 1,3 ];
+var maps_to_play = [ 7,9 ];
 var use_tps = P.name == "_hel";
 
 
@@ -583,21 +583,21 @@ var repair = {
 		addchat( Math.round( this.check_durability( ) * 100 ) + "% поломки. Включаем починку." );
 
 		var items = this.get_items( );
-		while( this.check_durability( ) < 1 ) {
-			for( var i in items ) {
-				if( items[ i ].cap == items[ i ].maxcap ) continue ;
-
-				var repair = this.find_repair_for( items[ i ].rid );
-				if( !repair ) {
-					addchat( "Нет ремонтов для "+ Objs[ items[ i ].rid ].name +". Автопочинка отключена." );
-					this.stop_repair = true;
-					return ;
+		if( this.check_durability( ) < 1 ) {
+			setTimeout( function( ) {
+				for( var i in items ) {
+					if( items[ i ].cap == items[ i ].maxcap ) continue ;
+					var repair = this.find_repair_for( items[ i ].rid );
+					if( !repair ) {
+						addchat( "Нет ремонтов для "+ Objs[ items[ i ].rid ].name +". Автопочинка отключена." );
+						this.stop_repair = true;
+						return ;
+					}
+					Cmd( "tmov&bag&"+ repair.slotid +"&"+repair.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
 				}
 
-				Cmd( "tmov&bag&"+ repair.slotid +"&"+repair.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
-			}
-
-			items = this.get_items( );
+				repair.do_repair( );
+			}, 200 );
 		}
 	}
 };
@@ -806,7 +806,7 @@ function intfShowUtens(AEvent) {
 
 var skills = {
 	buffs: {
-		0: [ ],
+		0: [ 161 ],
 		1: [ ],
 		2: [ ],
 		3: [ ],
