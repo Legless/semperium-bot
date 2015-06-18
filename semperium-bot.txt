@@ -62,7 +62,7 @@ function format_time( s ) {
 	var minutes = m % 60;
 	var hours = ( m - minutes ) / 60;
 
-	if( !s ) return '???';
+	if( !s || s < 0 ) return '???';
 
 	if( seconds < 10 ) seconds = '0' + seconds;
 	if( minutes < 10 ) minutes = '0' + minutes;
