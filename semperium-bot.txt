@@ -2,6 +2,46 @@ function addchat( s ) {
 	chatlog.Add( { "id": "chat_sys_log", "data": s } );	
 }
 
+chatlog.Add = function (AEvent) {
+	if (!AEvent["data"]) { return; }
+	AEvent["data"]=AEvent["data"].replace(/#5C;/g, "\\");
+	AEvent["data"]=AEvent["data"].replace(/#22;/g, "\"");
+	var xEl=GetEl(AEvent["id"]);
+
+	if( AEvent[ 'data' ].indexOf( 'преждевременно' ) > -1 ) {
+		var t = target;
+		stop_bot( );
+
+		setTimeout( function( ) {
+			start_bot( t );
+		}, 2500 );
+
+		console.log( 'wait!' );
+	}
+
+	if (xEl) {
+		if ((AEvent["id"]!="chat_sys_log") && (AEvent["id"]!="chat_bat_log") && (!AEvent["pid"])) { return; }
+		var xData="";
+		if (AEvent["name"]) { xData=xData + "<span class=\"chatuser\">" + AEvent["name"] + "</span>"; }
+		if (AEvent["toname"]) { xData=xData + "&nbsp;&gt;&nbsp;<span class=\"chatuser2\">" + AEvent["toname"] + "</span>"; }
+		if (AEvent["name"])  { xData=xData + ":&nbsp;"; }
+		xData=xData + AEvent["data"] + "<br />";
+		var yEl=document.createElement("span");
+		if (!yEl) { return null; }
+		yEl.PID=AEvent["pid"];
+		yEl.innerHTML=xData;
+		if ((AEvent["toname"]) && (AEvent["toname"]==P["name"])) { yEl.style.backgroundColor="#E9E3D6"; }
+		xEl.appendChild(yEl);
+		var xNodes=xEl.childNodes;
+		if (xNodes.length>40) {
+			var zEl=xEl.firstChild;
+			xEl.removeChild(zEl);
+			delete zEl;
+		}
+		xEl.scrollTop=xEl.scrollHeight;
+	}
+}
+
 function persNotifyExp( e ) { 
 	persUpdateExp( );
 	var xEl = GetEl( "c_exp" );
@@ -19,9 +59,6 @@ function persNotifyExp( e ) {
 }
 
 function timerMAdd(AEvent) {
-   AEvent.it = 0;
-   AEvent.rt = 1;
-   
    if (tMBusy) { tMAdd[tMAdd.length]=AEvent; }
    else { tMChain[tMChain.length]=AEvent; }
 }
@@ -189,7 +226,17 @@ var pet = {
 	},
 
 	get_drops: function( ) {
-		if( this.get( ) && are_there_any_drops( ) ) Cmd( 'baniobj&1' );		
+		if( !this.get( ) || !are_there_any_drops( ) || Math.random( ) < 0.8 ) return ;
+
+		var t = target;
+		stop_bot( );
+		setTimeout( function( ) {
+			Cmd( 'baniobj&1' );
+
+			setTimeout( function( ) {
+				start_bot( t );
+			}, 500 );
+		}, 500 )
 	},
 
 	need_heal: function( ) {
@@ -275,6 +322,9 @@ var run_from_ghosts = false;
 var hunt_for = 'm'; // target to attack
 
 function lglsBot( ) {
+	loc.Idle = time( );
+	loc.busy = false;
+
 	if( loc.Busy || loc.Disabled || botinterval <= 0 ) {
 		return ;
 	}
@@ -412,7 +462,7 @@ loc.EndTurn = function ( ) {
 
 	GetEl( 'flies' ).innerHTML = '';
 
-	setTimeout( lglsBot, 500 );
+	setTimeout( lglsBot, 200 );
 	window.botstats.calls++;
 }
 
@@ -455,7 +505,7 @@ function find_item( rid, s="bag" ) {
 	}
 }
 
-var maps_to_play = [ 7,9 ];
+var maps_to_play = [ 2,4 ];
 var use_tps = P.name == "_hel";
 
 
@@ -840,7 +890,7 @@ var skills = {
 		1: [ ],
 		2: [ ],
 		3: [ ],
-		4: [ 266, 269, 275 ],
+		4: [ 275 ],
 		5: [ 292, 295 ],
 		6: [ ],
 		7: [ 343 ],
