@@ -1,37 +1,49 @@
 ﻿function intfMethod(AMethod, AEvent) {
-   if (!AMethod) { return false; }
-   var xParams="";
-   if (AMethod.indexOf("(")>=0) {
-      AMethod=AMethod.replace(/\)/, "");
-      var xArr=AMethod.split("(");
-      AMethod=xArr[0];
-      xParams=xArr[1];
-   }
-   if (functionExists(AMethod)) {
-      if (xParams!="") {
-         eval("var xP=" + xParams);
-         for (var key in xP) { AEvent[key]=xP[key]; }
-      }
-      var xFunc=AMethod + "(AEvent);";
-     
-     if( AMethod == "wnd.Create" && AEvent.wndType == "modaldialog" ) 
-     	if( AEvent.id.indexOf( 'wnd_dialog' ) > -1 ) 
-     		return;
-     
-     
-      return eval(xFunc);
-   } else {
-      alert("Error: Method \"" + AMethod + "\" doesn't exist");
-      return null;
-   }
+	if (!AMethod) { return false; }
+	var xParams="";
+	if (AMethod.indexOf("(")>=0) {
+		AMethod=AMethod.replace(/\)/, "");
+		var xArr=AMethod.split("(");
+		AMethod=xArr[0];
+		xParams=xArr[1];
+	}
+	if (functionExists(AMethod)) {
+		if (xParams!="") {
+			eval("var xP=" + xParams);
+			for (var key in xP) { AEvent[key]=xP[key]; }
+		}
+		var xFunc=AMethod + "(AEvent);";
+		
+		if( AMethod == "wnd.Create" && AEvent.wndType == "modaldialog" ) 
+			if( AEvent.id.indexOf( 'wnd_dialog' ) > -1 ) 
+				return;
+
+		return eval(xFunc);
+	} else {
+		alert("Error: Method \"" + AMethod + "\" doesn't exist");
+		return null;
+	}
 }
 
-var oldcmd = Cmd;
-Cmd = function( a ) {
-	console.log( a );
-	oldcmd( a );
 
-	var c = a.split( '&' );
+function Cmd(AData) {
+	if ((P) && (P["globmode"]) && ((P["globmode"]=="trade") || (P["globmode"]=="craft") || (P["globmode"]=="xchg"))) {
+		if ((AData.indexOf("bwalk")==0) || (AData.indexOf("l")==0)) {
+			dbgErrCnt++;
+			loc.EndTurn();
+			return;
+		}
+	}
+
+	if ((Socket) && (SocketConnected)) {
+		LASTCMDTIME=time();
+		Socket.write(AData + "\n");
+	} else { statusEvent({"ERROR": "Not connected"}); }
+
+
+
+	console.log( AData );
+	var c = AData.split( '&' );
 	if( c[ 0 ] == "tccheck" ) {
 		setTimeout( craft_finish, 1000 );
 	}
