@@ -1,3 +1,5 @@
+// for( var i in M) if( M[i].mt=='v') delete M[i];
+
 function addchat( s ) {
 	chatlog.Add( { "id": "chat_sys_log", "data": s } );	
 }
@@ -183,8 +185,8 @@ function is_item_needed( id ) {
 
 	if( it.iid == 961 ) return true;
 
-	if( it.cls == 'w' && it.level < 55 ) return false;
-	if( it.cls == 'd' && it.level < 47 ) return false;
+	if( it.cls == 'w' && it.level < 60 ) return false;
+	if( it.cls == 'd' && it.level < 57 ) return false;
 
 	return true;
 }
@@ -199,7 +201,7 @@ function are_there_any_drops( ) {
 }
 
 var pet = {
-	use_pet: true,
+	use_pet: false,
 
 	get: function( ) {
 		if( !this.is_ok( ) ) return false;
@@ -505,7 +507,7 @@ function find_item( rid, s="bag" ) {
 	}
 }
 
-var maps_to_play = [ 2,4 ];
+var maps_to_play = [ 0,1 ];
 var use_tps = P.name == "_hel";
 
 
@@ -714,10 +716,12 @@ function SellItem( ) {
 		var m = false;
 	}
 
-	if( b.slotcls != 'bag' &&  b.slotcls != 'pers' ) {
+	if( b.slotcls != 'bag' && b.slotcls != 'pers' ) {
 		// забрать из утвари
 		Cmd( "tmov&"+ m.tid +"&"+ b.slotid +"&"+ b.id +"&bag&"+ getEmptySlot( 'bag' ) +"&0&" + b.quan );  
-	} else {
+	} else if( b.slotcls == 'bag' ) {
+		// из мешка
+
 		if( !m ) {
 			Cmd( "tmov&bag&"+ b.slotid +"&"+ b.id +"&null&"+ P.x + "&"+ P.y +"&" + b.quan );
 
@@ -732,6 +736,9 @@ function SellItem( ) {
 			Cmd( "tmov&bag&"+ b.slotid +"&"+ b.id +"&"+ m.tid +"&"+ getEmptySlot( m.tid ) +"&0&" + b.quan );
 		}
 		
+	} else if( b.slotcls == 'pers' ) {
+		// снять с тела
+		Cmd( "tmov&pers&"+ b.slotid +"&"+ b.id +"&bag&"+ getEmptySlot( 'bag' ) +"&0&" + b.quan );  		
 	}
 }
 
