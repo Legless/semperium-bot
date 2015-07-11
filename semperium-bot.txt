@@ -349,21 +349,7 @@ function lglsBot( ) {
 		for( var k in M ) {
 			var mob = M[ k ];
 
-			if( ( mob.mt == 'o' ) || ( mob.mt == hunt_for && mob.hel > 0 ) ) {
-				if( mob.mt == 'o' ) {
-					if( pet.is_ok( ) )	mob.ignored = true;  // если с петом всё окей -- пусть он собирает итемы
-					else				mob.ignored = !is_item_needed( mob.rid );
-					if( mob.ignored ) {
-						continue ;
-					}
-
-					if( !mob.checked ) {
-						addchat( mob.name + ": " + ( mob.ignored ? 'игнорируем' : 'подбираем' ) )
-					}
-
-					mob.checked = true;
-				}
-
+			if( mob.mt == hunt_for && mob.hel > 0 ) {
 				var dx = Math.pow( mob.x - player.x, 2 );
 				var dy = Math.pow( mob.y - player.y, 2 ); 
 				var d = Math.sqrt( dx+dy );
@@ -372,7 +358,33 @@ function lglsBot( ) {
 					distance = d;
 					target = mob;
 				}
+
+				// добиваем раненых
+				if( mob.hel < mob.hel_full ) {
+					target = mob;
+					break;
+				}
 			}
+		}
+	}
+
+	// дроп важнее моба
+	for( var k in M ) {
+		var mob = M[ k ];
+		if( mob.mt == 'o' ) {
+			if( mob.ignored ) continue;
+
+			mob.ignored = !is_item_needed( mob.rid );
+
+			if( !mob.checked ) {
+				addchat( mob.name + ": " + ( mob.ignored ? 'игнорируем' : 'подбираем' ) );
+				mob.checked = true;
+			}
+
+			if( mob.ignored ) continue;
+
+			target = mob;
+			break ;
 		}
 	}
 
@@ -507,8 +519,8 @@ function find_item( rid, s="bag" ) {
 	}
 }
 
-var maps_to_play = [ 0,1 ];
-var use_tps = P.name == "_hel";
+var maps_to_play = [ 6,8 ];
+var use_tps = true; //P.name == "_hel";
 
 
 function teleport_to( map_id ) {
