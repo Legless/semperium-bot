@@ -430,7 +430,14 @@ function lglsBot( ) {
 			slots.SelectEl( {el: $('#slots_fast_0') } );		
 		}
 	} else if( target.mt == 'o' ) {
-		slots.SelectEl( {el: $('#slots_fast_14') } );
+		var d = Math.sqrt( Math.pow( target.x - P.x, 2 ) + Math.pow( target.y - P.y, 2 ) );
+		if( d > 50 ) {
+			slots.SelectEl( {el: $('#slots_skill_1') } );
+		} else {
+			slots.SelectEl( {el: $('#slots_fast_14') } );
+			Cmd( 'tpickup&' + target.x + "&" + target.y + "&" + P.selo );
+			target = undefined;
+		}
 	} else {
 		if( skills.buff_avail( ) ) {
 			var t = target;
@@ -447,9 +454,10 @@ function lglsBot( ) {
 		slots.SelectEl( {el: $('#slots_fast_0') } );
 	}
 
-
-	loc.MouseMove( {elX: target.x, elY: target.y} );
-	loc.Click( {elX: target.x, elY: target.y} );
+	if( target ) {
+		loc.MouseMove( {elX: target.x, elY: target.y} );
+		loc.Click( {elX: target.x, elY: target.y} );
+	}
 
 	update_stats( );
 
