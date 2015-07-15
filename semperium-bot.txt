@@ -334,8 +334,9 @@ function lglsBot( ) {
 	var weapon = T[ find_item_id( 'pers', 0 ) ].rid;
 	if( weapon == 1923 ) hunt_for = 't'; // топор
 	else if( weapon == 1922 ) hunt_for = 'g'; // нож травника
+	else if( weapon == 1926 ) hunt_for = 'r'; // кирка
 	else hunt_for = 'm'; // оружие
-	// todo: кирка и перчатка
+	// todo: перчатка
 
 	if( !player || !helper_item ) {
 		alert( 'error' );
