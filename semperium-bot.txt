@@ -607,7 +607,7 @@ function escape_from_there( ) {
 }
 
 var repair = {
-	repair_durability_percent: 0.5, // процент поломки, ниже которого мы идём чиниться
+	repair_durability_percent: 0.75, // процент поломки, ниже которого мы идём чиниться
 	stop_repair: false,
 	repair_cycle: false,
 
@@ -630,6 +630,10 @@ var repair = {
 		else if( lvl <= 88 )	var i = 3;
 		else if( lvl <= 118 )	var i = 4;
 		else					var i = 5;
+
+		if( q.cls == 'w' && q.subcls == 'f' ) {
+			var i = 1;
+		}
 
 		if( q.cls == 'd' ) {
 			var id = 2735 + i;
