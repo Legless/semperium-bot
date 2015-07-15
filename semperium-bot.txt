@@ -675,6 +675,18 @@ var repair = {
 		}
 	},
 
+	upgrade_items: function( ) {
+		var upgrade = this.find_item_id( 'bag', 5057 );
+		if( !upgrade ) return ;
+
+		var items = this.get_items( );
+		for( var i in items ) {
+			if( Objs[ items[ i ].rid ].cls == 'w' && Objs[ items[ i ].rid ].subcls == 'f' ) {
+				Cmd( "tmov&bag&"+ upgrade.slotid +"&"+upgrade.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
+			}
+		}
+	},
+
 	do_repair: function( ) {
 		if( this.stop_repair ) return ;
 
@@ -702,6 +714,7 @@ var repair = {
 				repair.do_repair( );
 			}, 200 );
 		} else {
+			this.upgrade_items( );
 			this.repair_cycle = false;
 		}
 	}
