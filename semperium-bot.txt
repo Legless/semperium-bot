@@ -939,7 +939,7 @@ var skills = {
 		3: [ 240 ],
 		4: [ 275 ],
 		5: [ 292, 295, 301 ],
-		6: [ ],
+		6: [ 318, 321 ],
 		7: [ 343 ],
 		8: [ 369, 372 ]
 	},
@@ -951,7 +951,7 @@ var skills = {
 		3: [ ],
 		4: [ ],
 		5: [ 298 ],
-		6: [ ],
+		6: [ 319 ],
 		7: [ ],
 		8: [ ]
 	},
@@ -1016,6 +1016,8 @@ var skills = {
 	},
 
 	check_debuff: function( mob, debuff ) {
+		if( hunt_for !== 'm' ) return false; // не юзаем скиллы если не бьём мобов
+
 		if( mob.buff && mob.buff[ debuff.rid ] ) return false;
 		else return true;
 	},
