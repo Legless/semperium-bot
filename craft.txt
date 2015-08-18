@@ -154,7 +154,124 @@ function craft_finish( ) {
 		addchat( '+ ' + r.quan + ', '+ total_prod +' всего' );
 	}
 
+	repair.do_repair( );
+
 	setTimeout( do_craft, 1000 );
 }
 
 do_craft(  );
+
+var repair = {
+	repair_durability_percent: 0.4, // процент поломки, ниже которого мы идём чиниться
+	stop_repair: false,
+	repair_cycle: false,
+
+	find_item_id: function( s, sid ) {
+		for( var i in T ) {
+			if( T[ i ].slotcls == s && T[ i ].rid == sid ) {
+				return T[ i ];
+			}
+		}
+
+		return false;
+	},
+
+	find_repair_for: function( obj ) {
+		var q = Objs[ obj ];
+
+		var lvl = q.level;
+		if( lvl <= 28 )			var i = 1;
+		else if( lvl <= 58 )	var i = 2;
+		else if( lvl <= 88 )	var i = 3;
+		else if( lvl <= 118 )	var i = 4;
+		else					var i = 5;
+
+		if( q.cls == 'w' && ( q.subcls == 'f' || q.subcls == 'g' || q.subcls == 't' ) ) {
+			var i = 1;
+		}
+
+		if( q.cls == 'd' ) {
+			var id = 2735 + i;
+		} else if( q.cls == 'w' ) {
+			var id = 2740 + i;
+		} else {
+			return false;
+		}
+
+		return this.find_item_id( 'bag', id );
+	},
+
+	get_items: function( ) {
+		var items = [ ];
+		var cap = 0, maxcap = 0;
+		for( var i in T ) {
+			if( T[ i ].slotcls == "pers" ) {
+				items.push( T[ i ] );
+			}
+		}
+
+		return items;
+	},
+
+	check_durability: function( ) {
+		var items = this.get_items( );
+		var cap = 0, maxcap = 0;
+		for( var i in items ) {
+			if( items[ i ].cap && items[ i ].maxcap ) {
+				cap += items[ i ].cap * 1;
+				maxcap += items[ i ].maxcap * 1;
+			}
+		}
+
+		if( maxcap == 0 ) {
+			return 0;
+		} else {
+			return cap / maxcap;
+		}
+	},
+
+	upgrade_items: function( ) {
+		var upgrade = this.find_item_id( 'bag', 5057 );
+		if( !upgrade ) return ;
+
+		var items = this.get_items( );
+		for( var i in items ) {
+			var q = Objs[ items[ i ].rid ];
+			if( q.cls == 'w' && ( q.subcls == 'f' || q.subcls == 'g' || q.subcls == 't' ) ) {
+				Cmd( "tmov&bag&"+ upgrade.slotid +"&"+upgrade.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
+			}
+		}
+	},
+
+	do_repair: function( ) {
+		if( this.stop_repair ) return ;
+
+		if( !this.repair_cycle ) {
+			if( this.check_durability( ) && this.check_durability( ) > this.repair_durability_percent ) return ;
+
+			addchat( Math.round( this.check_durability( ) * 100 ) + "% поломки. Включаем починку." );
+		}
+
+		var items = this.get_items( );	
+		if( this.check_durability( ) < 1 ) {
+			this.repair_cycle = true;
+			setTimeout( function( ) {
+				for( var i in items ) {
+					if( items[ i ].cap == items[ i ].maxcap ) continue ;
+					var rep = repair.find_repair_for( items[ i ].rid );
+					if( !rep ) {
+						addchat( "Нет ремонтов для "+ Objs[ items[ i ].rid ].name +". Автопочинка отключена." );
+						repair.stop_repair = true;
+						return ;
+					}
+					Cmd( "tmov&bag&"+ rep.slotid +"&"+rep.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
+				}
+
+				repair.do_repair( );
+			}, 200 );
+		} else {
+			this.upgrade_items( );
+			this.repair_cycle = false;
+		}
+	}
+};

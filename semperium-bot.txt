@@ -640,7 +640,7 @@ var repair = {
 		else if( lvl <= 118 )	var i = 4;
 		else					var i = 5;
 
-		if( q.cls == 'w' && ( q.subcls == 'f' || q.subcls == 'g' ) ) {
+		if( q.cls == 'w' && ( q.subcls == 'f' || q.subcls == 'g' || q.subcls == 't' ) ) {
 			var i = 1;
 		}
 
@@ -691,7 +691,7 @@ var repair = {
 		var items = this.get_items( );
 		for( var i in items ) {
 			var q = Objs[ items[ i ].rid ];
-			if( q.cls == 'w' && ( q.subcls == 'f' || q.subcls == 'g' ) ) {
+			if( q.cls == 'w' && ( q.subcls == 'f' || q.subcls == 'g' || q.subcls == 't' ) ) {
 				Cmd( "tmov&bag&"+ upgrade.slotid +"&"+upgrade.id+"&pers&"+ items[ i ].slotid +"&" + items[ i ].id );
 			}
 		}
