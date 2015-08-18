@@ -1,4 +1,4 @@
-// for( var i in M) if( M[i].mt=='v') delete M[i];
+﻿// for( var i in M) if( M[i].mt=='v') delete M[i];
 
 function addchat( s ) {
 	chatlog.Add( { "id": "chat_sys_log", "data": s } );	
@@ -944,7 +944,7 @@ var skills = {
 		1: [ ],
 		2: [ ],
 		3: [ 240 ],
-		4: [ 275 ],
+		4: [ 275, 280 ],
 		5: [ 292, 295, 301 ],
 		6: [ 318, 321 ],
 		7: [ 343 ],
@@ -952,7 +952,7 @@ var skills = {
 	},
 
 	debuffs: {
-		0: [ ],
+		0: [ 168 ],
 		1: [ ],
 		2: [ ],
 		3: [ ],
