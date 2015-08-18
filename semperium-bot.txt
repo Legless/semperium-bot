@@ -616,7 +616,7 @@ function escape_from_there( ) {
 }
 
 var repair = {
-	repair_durability_percent: 0.75, // процент поломки, ниже которого мы идём чиниться
+	repair_durability_percent: 0.4, // процент поломки, ниже которого мы идём чиниться
 	stop_repair: false,
 	repair_cycle: false,
 
