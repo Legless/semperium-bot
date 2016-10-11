@@ -13,12 +13,8 @@
 	var items = [];
 
 	function repair_list( ) {
-		items = [];
-
-		for( var i in T ) {
-			if( ( T[ i ].slotcls == "pers" ) && ( T[ i ].cap < T[ i ].maxcap ) ) {
-				items.push( T[ i ] );
-			}
+		items = T.filter( function(i) {
+			return ( i.slotcls == "pers" ) && ( i.cap < i.maxcap );
 		}
 	}
 
